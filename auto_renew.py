@@ -57,14 +57,14 @@ class WeChatNotifier:
             return False
         
         data = {
-            "msgtype": "markdown",
-            "markdown": {
-                "content": f"## {title}\n\n{content}"
+            "msgtype": "text",
+            "text": {
+                "content": f"{title}\n\n{content}"
             }
         }
         
         if mentioned_list:
-            data["markdown"]["mentioned_list"] = mentioned_list
+            data["text"]["mentioned_list"] = mentioned_list
         
         try:
             response = requests.post(self.webhook_url, json=data, timeout=10)
@@ -234,11 +234,11 @@ def generate_log(results):
 
 def generate_wechat_message(results):
     lines = []
-    lines.append(f"**域名自动续期报告**")
+    lines.append(f"域名自动续期报告")
     lines.append(f"")
-    lines.append(f"**执行时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    lines.append(f"执行时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     lines.append(f"")
-    lines.append(f"**统计信息**:")
+    lines.append(f"统计信息:")
     lines.append(f"- 总计: {results['total']} 个")
     lines.append(f"- 成功: {results['success']} 个")
     lines.append(f"- 失败: {results['failed']} 个")
@@ -246,7 +246,7 @@ def generate_wechat_message(results):
     lines.append(f"")
     
     if results['failed'] > 0:
-        lines.append(f"**失败详情**:")
+        lines.append(f"失败详情:")
         for detail in results['details']:
             if detail['status'] in ['failed', 'error']:
                 error = detail.get('error', '未知错误')
@@ -254,7 +254,7 @@ def generate_wechat_message(results):
         lines.append(f"")
     
     if results['success'] > 0:
-        lines.append(f"**成功续期**:")
+        lines.append(f"成功续期:")
         success_count = 0
         for detail in results['details']:
             if detail['status'] == 'success' and success_count < 5:
