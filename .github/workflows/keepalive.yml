@@ -1,0 +1,39 @@
+name: Keepalive Workflow
+
+# 触发条件
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 每天 UTC 时间 0点（北京时间上午8点）执行一次检查
+  workflow_dispatch:      # 允许你在 GitHub 网页端手动点击运行（方便测试）
+
+jobs:
+  keepalive-job:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 必须的权限，允许推送到仓库
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1 # 仅拉取最新的一次 commit，加快速度
+          
+      - name: Check and Keepalive
+        run: |
+          # 获取最后一次提交的时间戳
+          LAST_COMMIT_DATE=$(git log -1 --format=%ct)
+          # 获取当前时间戳
+          NOW=$(date +%s)
+          # 计算相差的天数
+          DIFF=$(( (NOW - LAST_COMMIT_DATE) / 86400 ))
+          
+          echo "距离上次提交已经过去了 $DIFF 天。"
+          
+          # 如果距离上次提交超过 50 天，则触发保活提交
+          if [ $DIFF -gt 50 ]; then
+            echo "触发保活机制，生成空提交..."
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git commit --allow-empty -m "keepalive: prevent workflow suspension"
+            git push
+          else
+            echo "仓库依然活跃，无需操作。"
+          fi
